@@ -5,6 +5,15 @@ Topics2Themes is a visual analysis tool for computer-assisted coding of frequent
 
 The tool has been constructed by researchers at Linnaeus University, Potsdam University, Hokkaido University and the Institute for Language and Folklore. (For people involved, see publication list below.)
 
+## Standalone SweMPer timeline visualization
+
+An additive, standard-library-only visualization component reads existing NMF
+exports without changing topic modelling or page selection. It provides linked
+page timelines, year/topic filters, named groups, zoom and a labelled relative
+weight scale. See [usage and interpretation](SWEMPER_VISUALISATION.md) and the
+[Svenska Läkartidningen examples](examples/swemper_lakartidningen/README.md).
+The original modelling and application source remains unchanged.
+
 GUI example from ''Snippets of Folk Legends: Adapting a Text Mining Tool to a Collection of Folk Legends'' by Maria Skeppstedt, Rickard Domeij and Fredrik Skott.
 ![alttext](snippets-image.png)
 

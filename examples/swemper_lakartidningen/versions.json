@@ -1,0 +1,19 @@
+{
+  "default": "lakartidningen-swedish50",
+  "versions": [
+    {
+      "id": "lakartidningen-baseline",
+      "group": "Svenska Läkartidningen · NMF",
+      "label": "Original settings · 10 topics",
+      "description": "211,425 training pages; 498 selected pages and page–topic links. No stopwords, 10 requested/retained topics, up to 50 top documents per topic. Relative weights within each topic, not probabilities or full-corpus prevalence.",
+      "path": "examples/swemper_lakartidningen/baseline.html"
+    },
+    {
+      "id": "lakartidningen-swedish50",
+      "group": "Svenska Läkartidningen · NMF",
+      "label": "Swedish exploration · 39 retained topics",
+      "description": "50 requested/39 retained topics; 5,765 page–topic links covering 5,764 selected pages from 211,425 training pages. 108 stopwords; up to 150 top documents/topic. Exploratory, not validated optimal. Relative weights within topics.",
+      "path": "examples/swemper_lakartidningen/swedish_comparison.html"
+    }
+  ]
+}

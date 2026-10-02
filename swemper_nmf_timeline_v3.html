@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SweMPer — NMF ämnestidslinje</title>
+<style>
+:root { --panel-width: 560px; color: #253746; font-family: system-ui, sans-serif; }
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+body { display: flex; flex-direction: column; background: white; }
+header { flex: 0 0 auto; padding: 9px 14px; border-bottom: 1px solid #b6c2cd; background: #f7f7f7; }
+.heading { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+h1 { margin: 0; font-size: 15px; font-weight: 650; }
+#coverage { font-size: 12px; color: #506170; }
+.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; margin-top: 8px; font-size: 13px; }
+.filter-controls, .topic-controls, .zoom-controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+button, select, input { font: inherit; }
+button, select { height: 30px; border: 1px solid #9faeb9; border-radius: 5px; background: white; color: #253746; }
+button { cursor: pointer; padding: 0 9px; }
+button:hover:not(:disabled) { background: #e9eef2; }
+button:disabled { opacity: .45; cursor: default; }
+:focus-visible { outline: 2px solid #176eae; outline-offset: 2px; }
+.zoom-controls { margin-left: auto; }
+.zoom-controls button { min-width: 32px; }
+#zoom-slider { width: 135px; }
+#zoom-value { min-width: 46px; font-variant-numeric: tabular-nums; text-align: right; }
+#filter-status, #topic-status { font-size: 12px; color: #506170; }
+.group-toolbar { flex: 0 0 auto; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #b6c2cd; background: #f0f4f7; font-size: 13px; }
+#new-group-name { width: 140px; height: 30px; padding: 3px 7px; border: 1px solid #9faeb9; border-radius: 4px; }
+.group-list { display: flex; align-items: center; gap: 7px; overflow-x: auto; min-width: 0; flex: 1 1 160px; }
+.group-chip { flex: 0 0 auto; display: flex; align-items: center; gap: 5px; background: white; border: 1px solid #c6d1d8; border-left: 6px solid var(--group-color); border-radius: 5px; padding: 2px 5px; }
+.group-chip input { width: 110px; border: 0; background: transparent; }
+.group-chip button { height: 24px; padding: 0 5px; }
+.group-help { font-size: 12px; color: #506170; }
+.timeline-viewport { flex: 1 1 auto; min-height: 0; width: 100%; overflow: auto; position: relative; overscroll-behavior: contain; }
+.timeline-canvas { position: relative; }
+.sticky-labels { position: sticky; left: 0; float: left; width: var(--panel-width); z-index: 10; background: rgba(255,255,255,.98); border-right: 1px solid #888; box-shadow: 4px 0 8px #00000018; }
+.topic-label { position: absolute; left: 0; width: 100%; padding: 0 38px 0 9px; display: flex; align-items: center; gap: 8px; border-left: 5px solid transparent; border-bottom: 1px solid #e4e9ed; font-family: ui-monospace, monospace; font-size: 12px; }
+.topic-copy { min-width: 0; flex: 1; }
+.topic-name, .topic-count { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.topic-count { margin-top: 3px; font-size: 11px; color: #586c7c; }
+.topic-checkbox { flex: 0 0 auto; margin: 0; }
+.topic-label.is-selected { background: #fff1b9; }
+.topic-label.in-group { background: color-mix(in srgb, var(--group-color) 17%, white); border-left-color: var(--group-color); }
+.topic-label.group-first { box-shadow: inset 0 2px var(--group-color); }
+.topic-info { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); width: 23px; height: 23px; padding: 0; border: 1px solid #a4b0ba; border-radius: 50%; color: #27445e; }
+.timeline-svg { display: block; position: absolute; top: 0; }
+.timeline-svg a:hover circle { stroke: #142f46; stroke-width: 2; fill-opacity: 1; }
+.year-footer { flex: 0 0 38px; display: flex; background: #f6f8fa; border-top: 1px solid #888; box-shadow: 0 -3px 7px #00000012; z-index: 15; }
+.axis-label { width: var(--panel-width); flex: 0 0 var(--panel-width); padding: 9px 14px; border-right: 1px solid #888; font-size: 12px; }
+#year-viewport { flex: 1; min-width: 0; overflow: hidden; }
+#years { position: relative; height: 37px; }
+.year-label { position: absolute; top: 10px; font: 12px ui-monospace, monospace; white-space: nowrap; }
+.topic-info-panel { position: fixed; z-index: 40; top: 145px; right: 14px; width: min(360px, calc(100vw - 28px)); max-height: 70vh; overflow: auto; padding: 14px; border: 1px solid #8495a3; border-radius: 9px; background: white; box-shadow: 0 8px 28px #172c4260; font-size: 13px; line-height: 1.5; }
+.topic-info-panel[hidden] { display: none; }
+.topic-info-panel h2 { font-size: 16px; margin: 0 28px 8px 0; }
+.topic-info-panel p { margin: 7px 0; }
+.close-info { float: right; height: 24px; border: 0; padding: 0 5px; font-size: 20px; }
+#empty-message { position: absolute; top: 28px; padding: 15px; color: #506170; font-size: 14px; }
+@media (max-width: 1100px) { :root { --panel-width: 400px; } .zoom-controls { margin-left: 0; } .group-help { display: none; } }
+@media (max-width: 700px) { :root { --panel-width: 260px; } #zoom-slider { width: 90px; } .topic-count { display: none; } .group-toolbar { gap: 5px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="heading"><h1>SweMPer __JOURNAL_TITLE__ · __RUN_LABEL__</h1><span id="coverage"></span></div>
+  <div class="toolbar">
+    <div class="filter-controls" aria-label="Årsfilter">
+      <label>Från <select id="year-from"></select></label>
+      <label>Till <select id="year-to"></select></label>
+      <button id="apply-years" type="button">Visa intervallet</button>
+      <button id="reset-years" type="button">Alla år</button>
+      <span id="filter-status" aria-live="polite"></span>
+    </div>
+    <div class="topic-controls" aria-label="Ämnesurval">
+      <button id="clear-selection" type="button">Rensa urval</button>
+      <label><input id="only-selected" type="checkbox"> Visa bara grupper/valda</label>
+      <label><input id="hide-selected" type="checkbox"> Dölj grupper/valda</label>
+      <span id="topic-status" aria-live="polite">0 valda</span>
+    </div>
+    <div class="zoom-controls" aria-label="Zoomkontroller">
+      <button id="zoom-out" type="button" aria-label="Zooma ut">−</button>
+      <input id="zoom-slider" type="range" min="1" max="6" step="0.25" value="1" aria-label="Zoomnivå">
+      <button id="zoom-in" type="button" aria-label="Zooma in">+</button>
+      <output id="zoom-value" for="zoom-slider">1.00×</output>
+      <button id="zoom-reset" type="button">Återställ zoom</button>
+    </div>
+  </div>
+</header>
+<div class="group-toolbar" aria-label="Egna ämnesgrupper">
+  <label>Gruppnamn <input id="new-group-name" maxlength="48" placeholder="t.ex. behandling"></label>
+  <button id="create-group" type="button" disabled>Skapa grupp av valda</button>
+  <button id="reset-groups" type="button">Rensa grupper</button>
+  <div id="group-list" class="group-list" aria-live="polite"></div>
+  <span class="group-help">Markera ämnen → skapa grupp. ⓘ visar nyckelord och metod.</span>
+</div>
+<main id="viewport" class="timeline-viewport" aria-label="Ämnestidslinje" tabindex="0">
+  <div id="canvas" class="timeline-canvas">
+    <div id="labels" class="sticky-labels"></div>
+    <svg id="plot" class="timeline-svg" xmlns="http://www.w3.org/2000/svg" aria-label="Exporterade toppsidor per ämne"></svg>
+    <div id="empty-message" hidden>Inga ämnen valda. Avmarkera ”Visa bara grupper/valda” för att visa alla.</div>
+  </div>
+</main>
+<div class="year-footer"><div class="axis-label">År · positioner inom året är schematiska</div><div id="year-viewport"><div id="years"></div></div></div>
+<aside id="topic-info-panel" class="topic-info-panel" hidden aria-label="Ämnesinformation">
+  <button id="close-info" class="close-info" type="button" aria-label="Stäng ämnesinformation">×</button>
+  <h2 id="info-heading"></h2><p id="info-count"></p><p id="info-keywords"></p>
+  <details><summary>Metod och täckning</summary><p id="info-method"></p>
+    <p>NMF-vikter är inte sannolikheter. Exporten väljer toppsidor per ämne; en saknad sida betyder inte att dess vikt är noll. Positionerna inom varje år följer sidornas filnamnsordning och är inte publiceringsdatum.</p>
+  </details>
+</aside>
+<script>
+'use strict';
+const DATA = __DATA__;
+const METHOD = __METHOD__;
+const NS = 'http://www.w3.org/2000/svg';
+const $ = id => document.getElementById(id);
+const GROUP_COLORS = ['#b54345', '#176eae', '#8b5d17', '#267647', '#8145a0', '#a34e19', '#176f76', '#b13d73'];
+const MARKER_COLORS = ['#2763a2', '#b55147', '#527c52', '#744f9b', '#aa792b'];
+const topicById = new Map(DATA.topics.map(topic => [topic[0], topic]));
+const originalOrder = DATA.topics.map(topic => topic[0]);
+const originalRank = new Map(originalOrder.map((id, index) => [id, index]));
+const selected = new Set();
+const groups = [];
+let nextGroupId = 0, zoom = 1, fromYear = DATA.first, toYear = DATA.last;
+let showOnlySelection = false, hideSelection = false, infoTopic = null, infoOpener = null;
+let geometry = {width: 1, height: 1, panel: 560};
+
+function bounded(value, minimum, maximum, fallback) {
+  const number = Number(value);
+  return value !== null && Number.isFinite(number) ? Math.max(minimum, Math.min(maximum, number)) : fallback;
+}
+function topicGroup(id) { return groups.find(group => group.topics.includes(id)); }
+function selectedTopics() { return originalOrder.filter(id => selected.has(id) && !topicGroup(id)); }
+function addGroup(name, ids) {
+  const available = [...new Set(ids)].filter(id => Number.isInteger(id) && topicById.has(id) && !topicGroup(id));
+  available.sort((a, b) => originalRank.get(a) - originalRank.get(b));
+  if (!available.length) return;
+  groups.push({name: name.trim().slice(0, 48) || `Grupp ${groups.length + 1}`, topics: available,
+    color: GROUP_COLORS[nextGroupId++ % GROUP_COLORS.length]});
+  for (const id of available) selected.delete(id);
+}
+function persistState() {
+  const url = new URL(window.location.href);
+  url.searchParams.set('from', String(fromYear)); url.searchParams.set('to', String(toYear));
+  url.searchParams.set('zoom', String(zoom));
+  for (const key of ['groups', 'topics', 'only', 'hide']) url.searchParams.delete(key);
+  if (groups.length) url.searchParams.set('groups', JSON.stringify(groups.map(({name, topics}) => ({name, topics}))));
+  if (selected.size) url.searchParams.set('topics', selectedTopics().join(','));
+  if (showOnlySelection) url.searchParams.set('only', '1');
+  if (hideSelection) url.searchParams.set('hide', '1');
+  try { window.history.replaceState(null, '', url); } catch (error) { console.warn('Could not update view URL', error); }
+  notifyParent(url.search);
+}
+function notifyParent(search = window.location.search) {
+  if (window.parent !== window) window.parent.postMessage({type: 'swemper-view-state', search}, '*');
+}
+function svgElement(tag, attributes = {}) {
+  const element = document.createElementNS(NS, tag);
+  for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
+  return element;
+}
+function updateInfo() {
+  if (infoTopic === null) return;
+  const [id, label, count, words] = topicById.get(infoTopic);
+  const visible = DATA.markers.filter(marker => marker[0] === id && marker[1] >= fromYear && marker[1] <= toYear).length;
+  const group = topicGroup(id);
+  $('info-heading').textContent = `Ämne ${id}: ${label}${group ? ' · ' + group.name : ''}`;
+  $('info-count').textContent = `${count} exporterade toppsidor i ämnet (alla år); ${visible} i valt årsintervall. Detta är inte ämnets fullständiga antal sidor i korpusen.`;
+  $('info-keywords').textContent = 'Automatiska nyckelord: ' + words.join(', ');
+  $('info-method').textContent = `${METHOD.runs} NMF-körningar, ${METHOD.requestedTopics} begärda ämnen och överlappströskel ${METHOD.overlap} för stabila ämnen. Exporten behåller upp till ${METHOD.topDocuments} toppdokument per ämne. ${METHOD.stopwordCount} stoppord; ord förekommer i minst ${METHOD.minimumFrequency} dokument och högst ${METHOD.maximumFrequency * 100}% av dokumenten. ${DATA.represented.toLocaleString('sv-SE')} av ${DATA.pages.toLocaleString('sv-SE')} icke-tomma sidor finns i exporten. Inställningarna gäller hela körningen, inte säkerheten för en särskild rad.`;
+}
+function closeInfo() {
+  $('topic-info-panel').hidden = true; infoTopic = null;
+  if (infoOpener !== null) $('labels').querySelector(`.topic-info[data-topic="${infoOpener}"]`)?.focus();
+}
+function renderGroups() {
+  $('group-list').replaceChildren();
+  groups.forEach((group, index) => {
+    const chip = document.createElement('div'); chip.className = 'group-chip';
+    chip.style.setProperty('--group-color', group.color);
+    const number = document.createElement('strong'); number.textContent = `G${index + 1}`;
+    const name = document.createElement('input'); name.value = group.name; name.maxLength = 48;
+    name.setAttribute('aria-label', `Namn för grupp ${index + 1}`);
+    name.addEventListener('change', () => { group.name = name.value.trim() || `Grupp ${index + 1}`; render(); persistState(); });
+    const count = document.createElement('span'); count.textContent = `(${group.topics.length})`;
+    const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '×';
+    remove.setAttribute('aria-label', `Ta bort ${group.name}`);
+    remove.addEventListener('click', () => { groups.splice(groups.indexOf(group), 1); render(); persistState(); });
+    chip.append(number, name, count, remove); $('group-list').append(chip);
+  });
+}
+function render() {
+  const viewport = $('viewport');
+  const focusedId = document.activeElement?.classList.contains('topic-checkbox') ? document.activeElement.dataset.topic : null;
+  const panel = $('labels').getBoundingClientRect().width;
+  const ordered = [...groups.flatMap(group => group.topics), ...originalOrder.filter(id => !topicGroup(id))];
+  const shown = ordered.filter(id => {
+    const included = selected.has(id) || Boolean(topicGroup(id));
+    return hideSelection ? !included : !showOnlySelection || included;
+  });
+  const row = new Map(shown.map((id, index) => [id, index]));
+  const baseWidth = Math.max(600, viewport.clientWidth - panel, (toYear - fromYear + 1) * 80);
+  const width = baseWidth * zoom, yearWidth = width / (toYear - fromYear + 1);
+  const rowHeight = 60 * zoom, top = 22 * zoom;
+  const height = Math.max(viewport.clientHeight, top * 2 + shown.length * rowHeight);
+  geometry = {width, height, panel};
+  $('canvas').style.width = `${panel + width}px`; $('canvas').style.height = `${height}px`;
+  $('labels').style.height = `${height}px`;
+  $('plot').style.left = `${panel}px`;
+  for (const [key, value] of Object.entries({width, height, viewBox: `0 0 ${width} ${height}`})) $('plot').setAttribute(key, value);
+  $('years').style.width = `${width}px`;
+  $('plot').replaceChildren(); $('labels').replaceChildren(); $('years').replaceChildren();
+  $('empty-message').hidden = shown.length > 0; $('empty-message').style.left = `${panel}px`;
+  $('zoom-slider').value = zoom; $('zoom-value').value = `${zoom.toFixed(2)}×`;
+  $('zoom-out').disabled = zoom <= 1; $('zoom-in').disabled = zoom >= 6;
+  $('only-selected').checked = showOnlySelection;
+  $('hide-selected').checked = hideSelection;
+  $('topic-status').textContent = `${selectedTopics().length} valda`;
+  $('create-group').disabled = selectedTopics().length === 0;
+  $('reset-groups').disabled = groups.length === 0;
+  for (const id of shown) {
+    const index = row.get(id), y = top + index * rowHeight;
+    const [, label, count, words] = topicById.get(id), group = topicGroup(id);
+    const band = svgElement('rect', {x: 0, y, width, height: rowHeight,
+      fill: group ? group.color : '#dae3ea', 'fill-opacity': group ? 0.08 : (index % 2 ? 0.12 : 0)});
+    $('plot').append(band);
+    const labelRow = document.createElement('div'); labelRow.className = 'topic-label'; labelRow.dataset.topic = id;
+    labelRow.style.top = `${y}px`; labelRow.style.height = `${rowHeight}px`;
+    labelRow.classList.toggle('is-selected', selected.has(id));
+    labelRow.classList.toggle('in-group', Boolean(group));
+    if (group) { labelRow.style.setProperty('--group-color', group.color); labelRow.classList.toggle('group-first', group.topics[0] === id); }
+    labelRow.title = `${group ? group.name + ' · ' : ''}${words.join(', ')}`;
+    const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.className = 'topic-checkbox';
+    checkbox.dataset.topic = id; checkbox.checked = selected.has(id); checkbox.disabled = Boolean(group);
+    checkbox.setAttribute('aria-label', group ? `Ämne ${id} ingår i ${group.name}` : `Välj ämne ${id} för gruppering`);
+    checkbox.addEventListener('change', () => { checkbox.checked ? selected.add(id) : selected.delete(id); render(); persistState(); });
+    const copy = document.createElement('div'); copy.className = 'topic-copy';
+    const name = document.createElement('div'); name.className = 'topic-name';
+    const number = document.createElement('strong'); number.textContent = `${id}: `;
+    name.append(number, document.createTextNode(label));
+    const summary = document.createElement('div'); summary.className = 'topic-count'; summary.textContent = `${count} exporterade toppsidor · ${words.slice(0, 5).join(', ')}`;
+    copy.append(name, summary);
+    const info = document.createElement('button'); info.type = 'button'; info.className = 'topic-info'; info.dataset.topic = id; info.textContent = 'ⓘ';
+    info.setAttribute('aria-label', `Information om ämne ${id}`);
+    info.addEventListener('click', () => { infoTopic = id; infoOpener = id; updateInfo(); $('topic-info-panel').hidden = false; $('close-info').focus(); });
+    labelRow.append(checkbox, copy, info); $('labels').append(labelRow);
+  }
+  for (let year = fromYear; year <= toYear; year++) {
+    const x = (year - fromYear) * yearWidth;
+    $('plot').append(svgElement('line', {x1: x, y1: 0, x2: x, y2: height, stroke: '#dce4eb', 'stroke-width': 1}));
+    const label = document.createElement('span'); label.className = 'year-label'; label.style.left = `${x + 6}px`; label.textContent = year;
+    $('years').append(label);
+  }
+  let visibleLinks = 0;
+  for (const [id, year, position, name, url, weight] of DATA.markers) {
+    if (year < fromYear || year > toYear || !row.has(id)) continue;
+    const group = topicGroup(id);
+    const link = svgElement('a', {href: url, target: '_blank', rel: 'noopener noreferrer', 'data-topic': id, 'data-page': name});
+    const circle = svgElement('circle', {cx: (year - fromYear + position) * yearWidth,
+      cy: top + (row.get(id) + .5) * rowHeight, r: Math.max(4, Math.min(9, 4 + Math.sqrt(weight))),
+      fill: group ? group.color : MARKER_COLORS[originalRank.get(id) % MARKER_COLORS.length], 'fill-opacity': .75});
+    const title = svgElement('title'); title.textContent = `${name} · ämne ${id} · NMF-vikt ${weight.toFixed(3)}`;
+    circle.append(title); link.append(circle); $('plot').append(link); visibleLinks++;
+  }
+  for (const group of groups) {
+    const first = group.topics.find(id => row.has(id));
+    if (first !== undefined) $('plot').append(svgElement('rect', {class: 'group-guide', x: 0,
+      y: top + row.get(first) * rowHeight - 2, width, height: 3, fill: group.color, 'fill-opacity': .85, 'pointer-events': 'none'}));
+  }
+  $('filter-status').textContent = `${visibleLinks} sid–ämneslänkar · ${shown.length} ämnen`;
+  renderGroups(); updateInfo();
+  $('year-viewport').scrollLeft = viewport.scrollLeft;
+  if (focusedId !== null) $('labels').querySelector(`.topic-checkbox[data-topic="${focusedId}"]`)?.focus({preventScroll: true});
+}
+function setZoom(value, anchor = null) {
+  const viewport = $('viewport');
+  const next = Math.round(bounded(value, 1, 6, zoom) * 4) / 4;
+  if (next === zoom) return;
+  const x = anchor ? anchor.x : geometry.panel + Math.max(0, viewport.clientWidth - geometry.panel) / 2;
+  const y = anchor ? anchor.y : viewport.clientHeight / 2;
+  const relativeX = (viewport.scrollLeft + x - geometry.panel) / geometry.width;
+  const relativeY = (viewport.scrollTop + y) / zoom;
+  zoom = next; render();
+  viewport.scrollLeft = Math.max(0, relativeX * geometry.width - (x - geometry.panel));
+  viewport.scrollTop = Math.max(0, relativeY * zoom - y);
+  $('year-viewport').scrollLeft = viewport.scrollLeft; persistState();
+}
+function applyYears(first, last) {
+  fromYear = Math.round(bounded(first, DATA.first, DATA.last, DATA.first));
+  toYear = Math.round(bounded(last, fromYear, DATA.last, DATA.last));
+  $('year-from').value = fromYear; $('year-to').value = toYear;
+  $('viewport').scrollLeft = 0; render(); persistState();
+}
+for (let year = DATA.first; year <= DATA.last; year++) {
+  for (const select of [$('year-from'), $('year-to')]) { const option = document.createElement('option'); option.value = year; option.textContent = year; select.append(option); }
+}
+const parameters = new URLSearchParams(window.location.search);
+fromYear = Math.round(bounded(parameters.get('from'), DATA.first, DATA.last, DATA.first));
+toYear = Math.round(bounded(parameters.get('to'), fromYear, DATA.last, DATA.last));
+zoom = Math.round(bounded(parameters.get('zoom'), 1, 6, 1) * 4) / 4;
+try {
+  const restored = JSON.parse(parameters.get('groups') || '[]');
+  if (!Array.isArray(restored) || restored.length > DATA.topics.length) throw new Error('Invalid group list');
+  for (const item of restored) if (item && typeof item.name === 'string' && Array.isArray(item.topics) && item.topics.length <= DATA.topics.length) addGroup(item.name, item.topics);
+} catch (error) { console.warn('Could not restore groups', error); }
+for (const token of (parameters.get('topics') || '').split(',').slice(0, DATA.topics.length)) {
+  const id = Number(token); if (token.trim() && Number.isInteger(id) && topicById.has(id) && !topicGroup(id)) selected.add(id);
+}
+hideSelection = parameters.get('hide') === '1';
+showOnlySelection = !hideSelection && parameters.get('only') === '1';
+$('year-from').value = fromYear; $('year-to').value = toYear;
+$('coverage').textContent = `${DATA.topics.length} ämnen · ${DATA.represented.toLocaleString('sv-SE')} exporterade toppsidor av ${DATA.pages.toLocaleString('sv-SE')} icke-tomma sidor`;
+$('coverage').title = 'Tidslinjen visar bara originalexportens utvalda toppsidor, inte fullständiga sidtilldelningar.';
+$('apply-years').addEventListener('click', () => applyYears($('year-from').value, $('year-to').value));
+$('reset-years').addEventListener('click', () => applyYears(DATA.first, DATA.last));
+$('zoom-slider').addEventListener('input', event => setZoom(event.target.value));
+$('zoom-in').addEventListener('click', () => setZoom(zoom + .25));
+$('zoom-out').addEventListener('click', () => setZoom(zoom - .25));
+$('zoom-reset').addEventListener('click', () => setZoom(1));
+$('viewport').addEventListener('wheel', event => {
+  if (!event.ctrlKey && !event.metaKey) return;
+  const rect = $('viewport').getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  if (x < geometry.panel) return;
+  event.preventDefault(); setZoom(zoom + (event.deltaY < 0 ? .25 : -.25), {x, y: event.clientY - rect.top});
+}, {passive: false});
+$('viewport').addEventListener('scroll', () => { $('year-viewport').scrollLeft = $('viewport').scrollLeft; }, {passive: true});
+$('create-group').addEventListener('click', () => {
+  addGroup($('new-group-name').value, selectedTopics()); $('new-group-name').value = '';
+  $('viewport').scrollTop = 0; render(); persistState();
+});
+$('reset-groups').addEventListener('click', () => { groups.length = 0; nextGroupId = 0; render(); persistState(); });
+$('clear-selection').addEventListener('click', () => { selected.clear(); render(); persistState(); });
+$('only-selected').addEventListener('change', event => {
+  showOnlySelection = event.target.checked;
+  if (showOnlySelection) hideSelection = false;
+  render(); persistState();
+});
+$('hide-selected').addEventListener('change', event => {
+  hideSelection = event.target.checked;
+  if (hideSelection) showOnlySelection = false;
+  render(); persistState();
+});
+$('close-info').addEventListener('click', closeInfo);
+document.addEventListener('keydown', event => { if (event.key === 'Escape') closeInfo(); });
+let resizePending = false;
+window.addEventListener('resize', () => { if (resizePending) return; resizePending = true; requestAnimationFrame(() => { resizePending = false; render(); }); });
+render();
+notifyParent();
+</script>
+</body>
+</html>
+
