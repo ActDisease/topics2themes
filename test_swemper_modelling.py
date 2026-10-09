@@ -107,14 +107,14 @@ class ModellingExampleTests(unittest.TestCase):
         self.assertEqual(page_year(names[3]), ['1964-01-01'])
         self.assertRaises(ValueError, page_year, names[1])
 
-    def test_private_examples_are_ignored_and_previews_are_synthetic(self):
+    def test_private_examples_are_ignored_and_approved_previews_exist(self):
         rules = (ROOT / '.gitignore').read_text(encoding='utf-8').splitlines()
         self.assertIn('examples/swemper_nmf/', rules)
         self.assertIn('examples/swemper_lakartidningen/', rules)
         preview = ROOT / 'examples/interface_screenshots'
         note = (preview / 'README.md').read_text(encoding='utf-8')
-        self.assertIn('synthetic', note.lower())
-        for name in ('overview.png', 'groups-and-filter.png'):
+        self.assertIn('explicitly approved', note.lower())
+        for name in ('diabetes.png', 'lakartidningen.png'):
             self.assertEqual((preview / name).read_bytes()[:8], b'\x89PNG\r\n\x1a\n')
 
 

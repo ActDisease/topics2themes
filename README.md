@@ -11,7 +11,7 @@ An additive, standard-library-only visualization component reads existing NMF
 exports without changing topic modelling or page selection. It provides linked
 page timelines, year/topic filters, named groups, zoom and a labelled relative
 weight scale. See [usage and interpretation](SWEMPER_VISUALISATION.md) and
-[synthetic interface screenshots](examples/interface_screenshots/README.md).
+[actual interface screenshots](examples/interface_screenshots/README.md).
 Generate the current timeline in one command with `swemper_nmf_visualisation.py`;
 no intermediate rendering or versioned Python modules are required.
 Run-manifest instructions and an explicit document/year/image-or-URL manifest
@@ -22,7 +22,7 @@ For editable training parameters, exact stoplists, corpus-reader helpers,
 environment setup and metadata snapshots, see [SWEMPER_MODELLING.md](SWEMPER_MODELLING.md).
 Unpublished dataset viewers, analysis-specific manifests and descriptive results
 are not distributed. Raw texts, model exports, corpus symlinks, caches and
-environments are also excluded. Screenshots use explicitly synthetic data.
+environments are also excluded. Approved static screenshots show actual interfaces.
 
 GUI example from ''Snippets of Folk Legends: Adapting a Text Mining Tool to a Collection of Folk Legends'' by Maria Skeppstedt, Rickard Domeij and Fredrik Skott.
 ![alttext](snippets-image.png)

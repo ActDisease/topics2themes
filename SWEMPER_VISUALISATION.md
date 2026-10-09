@@ -19,8 +19,9 @@ The examples and tests are not required for rendering your own exports.
 
 ## Interface preview
 
-[Synthetic interface screenshots](examples/interface_screenshots/README.md)
-show the controls and final presentation without unpublished corpus information.
+[Actual interface screenshots](examples/interface_screenshots/README.md)
+show the controls and final presentation. These approved static previews include
+displayed topic labels and counts; the underlying corpora remain unpublished.
 Dataset-specific HTMLs, analysis manifests and descriptive results are not shipped.
 Render your own authorized export using the commands below. A generated HTML
 contains corpus-derived labels, identifiers, weights and counts; review it before

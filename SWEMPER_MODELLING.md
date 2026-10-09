@@ -19,8 +19,8 @@ NMF topics. Dataset-specific viewers and descriptive results are not distributed
 - `pyproject.toml` and `uv.lock`: the workspace's locked Python 3.10 training
   environment, not a replacement of the fork's modelling source.
 - `test_swemper_modelling.py`: configuration/reader/example checks without training.
-- [Synthetic interface screenshots](examples/interface_screenshots/README.md),
-  containing no real corpus outputs.
+- [Actual interface screenshots](examples/interface_screenshots/README.md),
+  explicitly approved static previews; no underlying corpus files are included.
 
 Raw OCR, corpus symlinks, model exports, MongoDB files, logs, caches, environments,
 intermediate viewers and researcher ZIPs are **not** shipped. Generated HTML contains
@@ -177,7 +177,7 @@ Topic IDs may have gaps; the largest topic ID is not the row count. Requested
 and retained topic counts are distinct. Retained counts may change on rerun.
 Top pages are not full-corpus assignments; NMF weights are not probabilities.
 Circle sizes are relative to each topic's strongest saved example, fixed through
-filtering and zoom. Public previews use labelled synthetic data only.
+filtering and zoom. Approved static previews show the actual reviewed interfaces.
 
 ```sh
 python3 -m unittest -v test_swemper_visualisation test_swemper_modelling
