@@ -17,42 +17,44 @@ No existing modelling source needs changing. Optional multi-view navigation uses
 `build_visualisation_browser.py`, `visualisation_browser.html` and a JSON registry.
 The examples and tests are not required for rendering your own exports.
 
-## View the examples
+## Interface preview
 
-Open `examples/swemper_nmf/index.html` for the final Diabetes Swedish30 and
-Läkartidningen Swedish50 examples, or serve this repository:
-
-```sh
-python3 -m http.server 8000 --bind 127.0.0.1
-```
-
-Then open http://127.0.0.1:8000/examples/swemper_nmf/index.html.
-The selector loads just one iframe and replaces it when switching views.
-Following scan links needs network access and may need SweMPer login/access.
-The saved HTML is self-contained apart from those outbound scan links.
+[Synthetic interface screenshots](examples/interface_screenshots/README.md)
+show the controls and final presentation without unpublished corpus information.
+Dataset-specific HTMLs, analysis manifests and descriptive results are not shipped.
+Render your own authorized export using the commands below. A generated HTML
+contains corpus-derived labels, identifiers, weights and counts; review it before
+sharing. Following scan links needs network access and may need normal access.
 
 ## Generate a current timeline
 
-### Prefilled SweMPer run manifests
+### SweMPer run manifests
 
-The two selected journal comparisons have prefilled JSON viewing settings:
-`examples/swemper_nmf/diabetes_manifest.json` and
-`examples/swemper_nmf/lakartidningen_manifest.json`.
-They reference the exact analysis-specific model exports and matching metadata
-snapshots in our workspace; those input datasets are **not** included in this
-repository contribution. To regenerate elsewhere, supply your own copies and
-adjust the input paths. These manifests configure viewing, not model fitting.
+Create a local JSON manifest referencing your own authorized export and matching
+metadata snapshot. No analysis-specific inputs or paths are distributed here.
+For example (all paths and display labels below are placeholders):
+
+```json
+{
+  "schema_version": 1,
+  "model": "inputs/analysis_model.json",
+  "metadata": "inputs/analysis_all_files.csv",
+  "metadata_format": "swemper_tsv",
+  "link_mode": "swemper",
+  "journal": "YOUR_JOURNAL_IDENTIFIER",
+  "title": "Your collection",
+  "label": "NMF · your authorized run"
+}
+```
+
+These settings configure viewing, not model fitting.
 For editable model parameters, exact stoplists, corpus preparation and training
 commands, see [SWEMPER_MODELLING.md](SWEMPER_MODELLING.md).
 
 ```sh
 python3 swemper_nmf_visualisation.py \
-  --manifest examples/swemper_nmf/diabetes_manifest.json \
-  --output generated/diabetes_swedish30.html
-
-python3 swemper_nmf_visualisation.py \
-  --manifest examples/swemper_nmf/lakartidningen_manifest.json \
-  --output generated/lakartidningen_swedish50.html
+  --manifest /path/to/your_run_manifest.json \
+  --output generated/your_timeline.html
 ```
 
 All manifest paths resolve relative to the manifest's location, regardless of
@@ -97,7 +99,7 @@ The configuration must include `NUMBER_OF_RUNS`, `OVERLAP_CUT_OFF`,
 Despite its `.csv` name, the metadata is tab-separated, no header:
 
 ```text
-/path/to/svenska_lakartidningen_1904_vol001_0139.txt<TAB>1904-01-01
+/path/to/YOUR_JOURNAL_IDENTIFIER_2000_vol001_0001.txt<TAB>2000-01-01
 ```
 
 Use a real tab, not the literal `<TAB>` notation. This metadata lists the training
@@ -208,13 +210,13 @@ title/label and link destinations are configurable, not an interface translation
 
 ## Optional selector
 
-The checked-in example registry uses repository-relative paths. Rebuild it with:
+Create your own registry for authorized generated viewers:
 
 ```sh
 python3 build_visualisation_browser.py \
   --workspace . \
-  --registry examples/swemper_lakartidningen/versions.json \
-  --output examples/swemper_lakartidningen/index.html
+  --registry your_versions.json \
+  --output generated/index.html
 ```
 
 For other views, supply the same registry structure: `default` is a unique view
@@ -254,4 +256,4 @@ presentation preservation, numerical sizing and selector path/state safeguards.
 They also cover manifests, generic IDs/years, safe relative-image links, missing
 targets, unlinked marks and command-line path resolution from another directory.
 They are component regressions, not the upstream application suite or validation
-of historical topic quality. See the examples README for saved-run provenance.
+of historical topic quality. No unpublished corpus exports are required.

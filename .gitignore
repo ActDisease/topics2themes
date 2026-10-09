@@ -13,6 +13,13 @@ __pycache__/
 .uv-bin/
 .hf-cache/
 generated/
+# Unpublished corpus-derived viewers, manifests and descriptive results stay local.
+examples/swemper_nmf/
+examples/swemper_lakartidningen/
+SV_LAKARTIDNINGEN_RESULTS.md
+SV_LAKARTIDNINGEN_REPRODUCTION.md
+SWEMPER_REPRODUCTION.md
+DEVELOPMENT_ISSUES_AND_RESOLUTIONS.md
 data_folder/*/swemper_timeline_v4/
 data_folder/diabetes_swemper/pages
 data_folder/diabetes_swemper/topics2themes_exports_folder_created_by_system/

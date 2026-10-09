@@ -1,11 +1,11 @@
 # SweMPer NMF modelling and reproduction
 
-This additive handoff contains editable configurations for the saved Diabetes
-Swedish30 and Svenska Läkartidningen Swedish50 examples. The fork's original
+This additive handoff contains editable Diabetes Swedish30 and Svenska
+Läkartidningen Swedish50 parameter presets. The fork's original
 modelling, matching, database and export source is unchanged. The local work was
 based on upstream revision `2f0946ae2d6398b274bc5717c6ffb70891d30c37`.
 The configurations reproduce the workflow, not a guarantee of identical future
-NMF topics. The reviewed saved HTMLs are preserved as separate examples.
+NMF topics. Dataset-specific viewers and descriptive results are not distributed.
 
 ## What is included
 
@@ -19,10 +19,11 @@ NMF topics. The reviewed saved HTMLs are preserved as separate examples.
 - `pyproject.toml` and `uv.lock`: the workspace's locked Python 3.10 training
   environment, not a replacement of the fork's modelling source.
 - `test_swemper_modelling.py`: configuration/reader/example checks without training.
-- Two final HTMLs and their viewing manifests in `examples/swemper_nmf/`.
+- [Synthetic interface screenshots](examples/interface_screenshots/README.md),
+  containing no real corpus outputs.
 
 Raw OCR, corpus symlinks, model exports, MongoDB files, logs, caches, environments,
-intermediate viewers and researcher ZIPs are **not** shipped. Saved HTML contains
+intermediate viewers and researcher ZIPs are **not** shipped. Generated HTML contains
 corpus-derived topic keywords, filenames, selected-page weights and links; it is
 not a data-free artifact. No raw OCR snippets are embedded by this renderer.
 
@@ -61,7 +62,7 @@ Swedish50 is an **exploratory preset**, not a proven optimum: the larger topic
 request and wider top-page selection help inspection; minimum frequency 20 and
 60,000-term cap constrain noisy large-corpus vocabulary; logarithmic term
 frequency reduces the influence of repeated words in long pages. Those choices
-were used together, so this is not a controlled stopwords-only experiment.
+are a combined preset, not a controlled stopwords-only experiment.
 Keep a separate named configuration/run for changes. If convergence warnings
 appear, record them and test a separately labelled iteration adjustment rather
 than silently changing this reference preset. Stability selection is not human
@@ -80,10 +81,10 @@ is neither a page probability nor a direct stopword filter.
 ## Supply your own corpus
 
 The upstream reader recursively finds `*.txt` under the configured `pages`
-directory. Files can be grouped into year folders, for example:
+directory. Files can be grouped into year folders, for example (synthetic names):
 
-- `data_folder/diabetes_swemper_swedish30/pages/1949/diabetes_1949_vol001_nr002_0001.txt`
-- `data_folder/sv_lakartidningen_swedish50/pages/1904/svenska_lakartidningen_1904_vol001_0139.txt`
+- `data_folder/diabetes_swemper_swedish30/pages/2000/diabetes_2000_vol001_nr001_0001.txt`
+- `data_folder/sv_lakartidningen_swedish50/pages/2000/svenska_lakartidningen_2000_vol001_0001.txt`
 
 Provide copies or local symlinks yourself; neither is committed here. Both
 comparison collections have independent `pages` locations. A shared baseline
@@ -120,8 +121,8 @@ These are reproduction setup commands, not actions performed by this handoff.
 Review dependency downloads and provision MongoDB through your normal local
 setup. Check the fork's `environment_configuration.py` for its workspace and
 MongoDB connection settings. `STORE_IN_DATABASE=False` uses the existing
-**disk-model / MongoDB-metadata** route; it is not a database-free option. Both
-larger exports need this supported route to avoid MongoDB's 16 MiB single-document
+**disk-model / MongoDB-metadata** route; it is not a database-free option. Large
+exports can need this supported route to avoid MongoDB's 16 MiB single-document
 limit. Do not truncate exports or patch the connector to bypass that failure.
 The tokenizer should already be available before importing the training module,
 whose existing fallback may try to download it.
@@ -157,10 +158,10 @@ cp -n "$exports/all_files.csv" "$exports/${analysis_id}_all_files.csv"
 ```
 
 Do not reuse metadata from a later run or overwrite a previously saved snapshot.
-Copy the matching example JSON viewing manifest to a new local file, then replace
-its `model` and `metadata` paths with the new export and snapshot. Paths resolve
-relative to that JSON file. Label the new experiment separately; do not point a
-new run at the reviewed example HTML output paths. Preserve its configuration,
+Create a local viewing manifest using the placeholder schema in
+`SWEMPER_VISUALISATION.md`, with paths to your new export and snapshot. Paths
+resolve relative to that JSON file. Label each experiment separately and preserve
+existing outputs. Preserve its configuration,
 stoplist, log and exports locally for provenance. The model's saved configuration
 omits some effective fields, so keep the actual Python config with the run too.
 
@@ -170,23 +171,20 @@ omits some effective fields, so keep the actual Python config with the run too.
   --output /path/to/new_run_timeline.html
 ```
 
-## Saved examples and verification limits
+## Interpretation and verification limits
 
-The provided Diabetes example retained 26 topics from 30 requested, with 2,490
-unique exported top pages (2,588 page-topic associations) from 8,834 nonblank
-training pages. Läkartidningen retained 39 from 50 requested, with 5,764 unique
-top pages (5,765 associations) from 211,425 nonblank pages. IDs have gaps; the
-largest topic ID is not the row count. Retained counts may change on rerun.
+Topic IDs may have gaps; the largest topic ID is not the row count. Requested
+and retained topic counts are distinct. Retained counts may change on rerun.
 Top pages are not full-corpus assignments; NMF weights are not probabilities.
 Circle sizes are relative to each topic's strongest saved example, fixed through
-filtering and zoom. See [the examples](examples/swemper_nmf/README.md).
+filtering and zoom. Public previews use labelled synthetic data only.
 
 ```sh
 python3 -m unittest -v test_swemper_visualisation test_swemper_modelling
 ```
 
-The focused tests use explicit fixtures and the shipped saved examples. Reader
+The focused tests use explicit synthetic fixtures and parameter presets. Reader
 hook tests stub the upstream I/O function so they do not import training code,
 download resources, start services or fit models. They are not the complete
 upstream suite. A fresh full-corpus training rerun is not part of final packaging;
-unchanged export/metadata and reviewed HTML preservation are checked separately.
+no dataset-specific outcomes or corpus populations are asserted by these tests.

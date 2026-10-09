@@ -6,9 +6,7 @@ No model fitting, MongoDB access, tokenizer downloads or private corpus needed.
 import importlib
 import contextlib
 import io
-import json
 from pathlib import Path
-import re
 import sys
 import types
 import unittest
@@ -109,32 +107,15 @@ class ModellingExampleTests(unittest.TestCase):
         self.assertEqual(page_year(names[3]), ['1964-01-01'])
         self.assertRaises(ValueError, page_year, names[1])
 
-    def test_two_saved_examples_match_configs_and_manifest_contract(self):
-        folder = ROOT / 'examples/swemper_nmf'
-        registry = json.loads((folder / 'versions.json').read_text(encoding='utf-8'))
-        self.assertEqual(len(registry['versions']), 2)
-        self.assertEqual({Path(row['path']).name for row in registry['versions']},
-                         {'diabetes.html', 'lakartidningen.html'})
-        for name, collection, retained, pages, represented, markers in [
-            ('diabetes', 'diabetes_swemper_swedish30', 26, 8834, 2490, 2588),
-            ('lakartidningen', 'sv_lakartidningen_swedish50', 39, 211425, 5764, 5765),
-        ]:
-            source = (folder / f'{name}.html').read_text(encoding='utf-8')
-            match = re.search(r'const DATA = (.*?);\nconst METHOD = (.*?);\n', source, re.DOTALL)
-            self.assertIsNotNone(match)
-            assert match is not None
-            data, method = (json.loads(value) for value in match.groups())
-            config = importlib.import_module(f'data_folder.{collection}.topic_model_configuration')
-            self.assertEqual((len(data['topics']), data['pages'], data['represented'], len(data['markers'])),
-                             (retained, pages, represented, markers))
-            self.assertEqual(method['requestedTopics'], config.NUMBER_OF_TOPICS)
-            self.assertEqual(method['topDocuments'], config.NR_OF_TOP_DOCUMENTS)
-            self.assertEqual(method['stopwordCount'], 108)
-            settings = json.loads((folder / f'{name}_manifest.json').read_text(encoding='utf-8'))
-            self.assertEqual(settings['schema_version'], 1)
-            self.assertEqual(settings['link_mode'], 'swemper')
-            self.assertIn(collection, settings['model'])
-            self.assertFalse(Path(settings['model']).is_absolute())
+    def test_private_examples_are_ignored_and_previews_are_synthetic(self):
+        rules = (ROOT / '.gitignore').read_text(encoding='utf-8').splitlines()
+        self.assertIn('examples/swemper_nmf/', rules)
+        self.assertIn('examples/swemper_lakartidningen/', rules)
+        preview = ROOT / 'examples/interface_screenshots'
+        note = (preview / 'README.md').read_text(encoding='utf-8')
+        self.assertIn('synthetic', note.lower())
+        for name in ('overview.png', 'groups-and-filter.png'):
+            self.assertEqual((preview / name).read_bytes()[:8], b'\x89PNG\r\n\x1a\n')
 
 
 if __name__ == '__main__':
