@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SweMPer — NMF ämnestidslinje</title>
+<title>NMF ämnestidslinje</title>
 <style>
 :root { --panel-width: 560px; color: #253746; font-family: system-ui, sans-serif; }
 * { box-sizing: border-box; }
@@ -60,11 +60,19 @@ button:disabled { opacity: .45; cursor: default; }
 #empty-message { position: absolute; top: 28px; padding: 15px; color: #506170; font-size: 14px; }
 @media (max-width: 1100px) { :root { --panel-width: 400px; } .zoom-controls { margin-left: 0; } .group-help { display: none; } }
 @media (max-width: 700px) { :root { --panel-width: 260px; } #zoom-slider { width: 90px; } .topic-count { display: none; } .group-toolbar { gap: 5px; } }
+
+.weight-key { margin-top: 8px; font-size: 12px; line-height: 1.45; }
+.weight-key summary { cursor: pointer; font-weight: 600; }
+.weight-key p { margin: 5px 0; max-width: 1050px; }
+#weight-legend { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.weight-example { display: inline-flex; align-items: center; gap: 4px; }
+.weight-example svg { width: 24px; height: 24px; vertical-align: middle; }
+.export-warning { margin: 6px 0 0; font-size: 12px; color: #43596a; }
 </style>
 </head>
 <body>
 <header>
-  <div class="heading"><h1>SweMPer __JOURNAL_TITLE__ · __RUN_LABEL__</h1><span id="coverage"></span></div>
+  <div class="heading"><h1>__JOURNAL_TITLE__ · __RUN_LABEL__</h1><span id="coverage"></span></div>
   <div class="toolbar">
     <div class="filter-controls" aria-label="Årsfilter">
       <label>Från <select id="year-from"></select></label>
@@ -87,6 +95,18 @@ button:disabled { opacity: .45; cursor: default; }
       <button id="zoom-reset" type="button">Återställ zoom</button>
     </div>
   </div>
+
+  <details class="weight-key">
+    <summary><span id="weight-legend"></span> · Relativ vikt inom ämnet (inte sannolikhet) ⓘ</summary>
+    <p>100 % är den högsta exporterade NMF-vikten i just detta ämne, räknat över alla år.
+    Jämför storlekar inom samma ämne, inte råa vikter mellan ämnen eller modellkörningar.
+    Skalan ändras inte när du filtrerar, grupperar eller zoomar. Hovra över en sida för rå vikt.</p>
+    <p>Radien är √(4 + 96 × relativ vikt) px: en synlighetsbas på 2 px,
+    med extra cirkelyta proportionell mot relativ vikt och högsta radie 10 px.
+    Färger skiljer ämnen eller egna grupper; de visar inte säkerhet.
+    Egna grupper är forskarens urval, inte automatiskt beräknade NMF-övergrupper.</p>
+  </details>
+  <p class="export-warning" id="export-warning"></p>
 </header>
 <div class="group-toolbar" aria-label="Egna ämnesgrupper">
   <label>Gruppnamn <input id="new-group-name" maxlength="48" placeholder="t.ex. behandling"></label>
@@ -161,6 +181,27 @@ function svgElement(tag, attributes = {}) {
   for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
   return element;
 }
+
+// Fixed over the entire saved export, never the currently visible subset.
+const topicWeightMax = new Map();
+for (const [id, , , , , weight] of DATA.markers) {
+  topicWeightMax.set(id, Math.max(topicWeightMax.get(id) || 0, weight));
+}
+function relativeWeight(id, weight) { return weight / topicWeightMax.get(id); }
+function weightRadius(proportion) { return Math.sqrt(4 + 96 * proportion); }
+function renderWeightLegend() {
+  $('weight-legend').replaceChildren();
+  for (const proportion of [.25, .5, 1]) {
+    const example = document.createElement('span'); example.className = 'weight-example';
+    const svg = svgElement('svg', {viewBox: '0 0 24 24', 'aria-hidden': 'true'});
+    svg.append(svgElement('circle', {cx: 12, cy: 12, r: weightRadius(proportion), fill: '#43596a', 'fill-opacity': .75}));
+    example.append(svg, document.createTextNode(`${proportion * 100} %`));
+    $('weight-legend').append(example);
+  }
+  $('export-warning').textContent = `Endast exporterade toppsidor: ${DATA.represented.toLocaleString('sv-SE')} av ${DATA.pages.toLocaleString('sv-SE')} träningssidor (alla år). Luckor och täthet visar inte full korpusförekomst. Saknade sidor behöver inte sakna ämnet.`;
+}
+renderWeightLegend();
+
 function updateInfo() {
   if (infoTopic === null) return;
   const [id, label, count, words] = topicById.get(infoTopic);
@@ -253,23 +294,25 @@ function render() {
     const label = document.createElement('span'); label.className = 'year-label'; label.style.left = `${x + 6}px`; label.textContent = year;
     $('years').append(label);
   }
-  let visibleLinks = 0;
+  let visibleMarkers = 0;
   for (const [id, year, position, name, url, weight] of DATA.markers) {
     if (year < fromYear || year > toYear || !row.has(id)) continue;
     const group = topicGroup(id);
-    const link = svgElement('a', {href: url, target: '_blank', rel: 'noopener noreferrer', 'data-topic': id, 'data-page': name});
+    const link = url
+      ? svgElement('a', {href: url, target: '_blank', rel: 'noopener noreferrer', 'data-topic': id, 'data-page': name})
+      : svgElement('g', {'data-topic': id, 'data-page': name});
     const circle = svgElement('circle', {cx: (year - fromYear + position) * yearWidth,
-      cy: top + (row.get(id) + .5) * rowHeight, r: Math.max(4, Math.min(9, 4 + Math.sqrt(weight))),
+      cy: top + (row.get(id) + .5) * rowHeight, r: weightRadius(relativeWeight(id, weight)),
       fill: group ? group.color : MARKER_COLORS[originalRank.get(id) % MARKER_COLORS.length], 'fill-opacity': .75});
-    const title = svgElement('title'); title.textContent = `${name} · ämne ${id} · NMF-vikt ${weight.toFixed(3)}`;
-    circle.append(title); link.append(circle); $('plot').append(link); visibleLinks++;
+    const title = svgElement('title'); title.textContent = `${name} · ämne ${id} · NMF-vikt ${weight} · relativ vikt inom ämnet ${(relativeWeight(id, weight) * 100).toFixed(1)} % (inte sannolikhet)`;
+    circle.append(title); link.append(circle); $('plot').append(link); visibleMarkers++;
   }
   for (const group of groups) {
     const first = group.topics.find(id => row.has(id));
     if (first !== undefined) $('plot').append(svgElement('rect', {class: 'group-guide', x: 0,
       y: top + row.get(first) * rowHeight - 2, width, height: 3, fill: group.color, 'fill-opacity': .85, 'pointer-events': 'none'}));
   }
-  $('filter-status').textContent = `${visibleLinks} sid–ämneslänkar · ${shown.length} ämnen`;
+  $('filter-status').textContent = `${visibleMarkers} sid–ämnespunkter · ${shown.length} ämnen`;
   renderGroups(); updateInfo();
   $('year-viewport').scrollLeft = viewport.scrollLeft;
   if (focusedId !== null) $('labels').querySelector(`.topic-checkbox[data-topic="${focusedId}"]`)?.focus({preventScroll: true});

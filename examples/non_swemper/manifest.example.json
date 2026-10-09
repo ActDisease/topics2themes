@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "model": "model.json",
+  "metadata": "documents.csv",
+  "metadata_format": "documents_csv",
+  "link_mode": "targets",
+  "asset_root": ".",
+  "title": "My ActDisease collection",
+  "label": "NMF \u00b7 saved run"
+}

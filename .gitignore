@@ -10,6 +10,9 @@ __pycache__/
 .uv-python-bin/
 .nltk_data/
 .runtime/
+.uv-bin/
+.hf-cache/
+generated/
 data_folder/*/swemper_timeline_v4/
 data_folder/diabetes_swemper/pages
 data_folder/diabetes_swemper/topics2themes_exports_folder_created_by_system/

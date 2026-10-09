@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "model": "../../data_folder/diabetes_swemper_swedish30/topics2themes_exports_folder_created_by_system/6abd1f14729cac1eb072614c_model.json",
+  "metadata": "../../data_folder/diabetes_swemper_swedish30/topics2themes_exports_folder_created_by_system/6abd1f14729cac1eb072614c_all_files.csv",
+  "metadata_format": "swemper_tsv",
+  "link_mode": "swemper",
+  "journal": "diabetes",
+  "title": "Diabetes",
+  "label": "NMF · svenska stoppord, 30 begärda ämnen"
+}
